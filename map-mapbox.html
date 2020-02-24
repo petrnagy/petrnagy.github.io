@@ -47,7 +47,7 @@
         L.control.zoom({ position: controlsPosition }).addTo(map);
         // L.control.layers([lightLayer], null, { position: controlsPosition }).addTo(map);
 
-        axios.get('https://www.petrnagy.cz/mapbox/plans.json').then(res => {
+        axios.get('https://petrnagy.github.io/plans.json').then(res => {
 
             res.data.plans.forEach(plan => {
 
@@ -75,13 +75,13 @@
 
                 let start = L.marker(lls[0]);
                 start.setIcon(L.icon({
-                    iconUrl: 'https://www.petrnagy.cz/mapbox/marker_a.svg',
+                    iconUrl: 'https://petrnagy.github.io/marker_a.svg',
                     iconSize: [32, 32],
                     iconAnchor: [16, 16],
                 }));
                 let finish = L.marker(lls[lls.length - 1]);
                 finish.setIcon(L.icon({
-                    iconUrl: 'https://www.petrnagy.cz/mapbox/marker_b.svg',
+                    iconUrl: 'https://petrnagy.github.io/marker_b.svg',
                     iconSize: [32, 32],
                     iconAnchor: [16, 16],
                 }));
