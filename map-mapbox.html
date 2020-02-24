@@ -1,0 +1,157 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Mapbox.js vs Mapbox GL JS</title>
+    <meta name="description" content="Mapbox.js vs Mapbox GL JS">
+    <meta name="author" content="Petr Nagy">
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .map {
+            width: 100vw;
+            height: 100vh;
+            cursor: grab;
+        }
+    </style>
+    <script src='https://api.mapbox.com/mapbox.js/v3.2.1/mapbox.js'></script>
+    <link href='https://api.mapbox.com/mapbox.js/v3.2.1/mapbox.css' rel='stylesheet' />
+
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <div id="map" class="map"></div>
+
+    <script>
+        const center = [50.0870167, 14.4240186];
+
+        L.mapbox.accessToken = 'pk.eyJ1IjoicGV0ci1uYWd5LW1hcGJveCIsImEiOiJjanB2YXVwMGQwMXQyNDlsOWo3MzMza2FjIn0.-MFdWhYvFHNYA-N6M5IA1g';
+        const controlsPosition = 'topright';
+        const map = L.mapbox.map('map', '', {
+            zoomControl: false,
+        }).setView([50.0870167, 14.4240186], 14);
+
+        const lightSkin = 'mapbox://styles/petr-nagy-mapbox/ck6uzcqbm03cu1iovd32221j0';
+        const lightLayer = L.mapbox.styleLayer(lightSkin);
+        lightLayer.id = 'light';
+
+        lightLayer.addTo(map);
+
+        L.control.zoom({ position: controlsPosition }).addTo(map);
+        // L.control.layers([lightLayer], null, { position: controlsPosition }).addTo(map);
+
+        axios.get('https://www.petrnagy.cz/mapbox/plans.json').then(res => {
+
+            res.data.plans.forEach(plan => {
+
+                let lls = lls_to_array(plan);
+
+                let bg = L.polyline(lls, {
+                    weight: 10,
+                    opacity: 1,
+                    lineJoin: 'round',
+                    lineCap: 'round',
+                    smoothFactor: 0,
+                    color: '#888',
+                });
+                let route = L.polyline(lls, {
+                    weight: 4,
+                    opacity: 1,
+                    lineJoin: 'round',
+                    lineCap: 'round',
+                    smoothFactor: 0,
+                    color: random_color(),
+                });
+
+                map.addLayer(bg);
+                map.addLayer(route);
+
+                let start = L.marker(lls[0]);
+                start.setIcon(L.icon({
+                    iconUrl: 'https://www.petrnagy.cz/mapbox/marker_a.svg',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16],
+                }));
+                let finish = L.marker(lls[lls.length - 1]);
+                finish.setIcon(L.icon({
+                    iconUrl: 'https://www.petrnagy.cz/mapbox/marker_b.svg',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16],
+                }));
+
+                finish.addTo(map);
+                start.addTo(map);
+
+            });
+        });
+
+        if (window.location.hash.indexOf('automove=yes') >= 0) {
+            // map.on('load', function () {
+            const steps = [
+                [center[0] - .015, center[1] - .015],
+                [center[0] + .015, center[1] + .015],
+                [center[0] + .015, center[1] - .015],
+                [center[0] - .015, center[1] + .015],
+            ];
+            var step = 0;
+
+            var interval = setInterval(function () {
+                map.setView([steps[step][0], steps[step]][1], map.getZoom() > 13 ? 12 : 15);
+                // mapboxMap.flyTo({
+                //     center: [steps[step][0], steps[step]][1],
+                //     zoom: mapboxMap.getZoom() > 12 ? 11 : 15,
+                // });
+
+                ++step;
+                if ('undefined' == typeof steps[step]) {
+                    step = 0;
+                } // end if
+            }, 5000);
+            // });
+        } // end if
+        
+
+        function lls_to_array(plan) {
+            let allLatLongs = [];
+            for (var i = 0; i < plan.legs.length; i++) {
+
+                allLatLongs.push([plan.legs[i].start.lat, plan.legs[i].start.lon]);
+
+                for (let j = 0; j < plan.legs[i].steps.length; j++) {
+
+                    if ('undefined' !== typeof plan.legs[i].steps[j].via) {
+                        for (let k = 0; k < plan.legs[i].steps[j].via.length; k++) {
+                            allLatLongs.push([plan.legs[i].steps[j].via[k].lat, plan.legs[i].steps[j].via[k].lon]);
+                        } // end for
+                    } // end for
+
+                    allLatLongs.push([plan.legs[i].steps[j].end.lat, plan.legs[i].steps[j].end.lon]);
+                } // end for
+            } // end for
+
+            return allLatLongs;
+        } // end function
+
+        function random_color() {
+            var letters = '0123456789ABCDEF';
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        } // end function
+
+    </script>
+    <script>
+        javascript: (function () { var script = document.createElement('script'); script.onload = function () { var stats = new Stats(); document.body.appendChild(stats.dom); requestAnimationFrame(function loop() { stats.update(); requestAnimationFrame(loop) }); }; script.src = 'https://mrdoob.github.io/stats.js/build/stats.min.js'; document.head.appendChild(script); })()
+    </script>
+</body>
+
+</html>
